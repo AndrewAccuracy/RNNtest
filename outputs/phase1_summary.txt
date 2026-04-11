@@ -1,0 +1,30 @@
+Phase 1: History-MLP, Flat-MLP, RNN
+
+Critical gap threshold: accuracy < 0.85
+
+History-MLP
+  critical_gap: 10
+  gap= 10: mean=0.4988, std=0.0277, epochs_to_threshold=None
+  gap= 18: mean=0.5084, std=0.0199, epochs_to_threshold=None
+  gap= 20: mean=0.4996, std=0.0139, epochs_to_threshold=None
+  gap= 22: mean=0.4948, std=0.0142, epochs_to_threshold=None
+  gap= 26: mean=0.5040, std=0.0300, epochs_to_threshold=None
+  gap= 30: mean=0.5028, std=0.0195, epochs_to_threshold=None
+
+Flat-MLP
+  critical_gap: None
+  gap= 10: mean=1.0000, std=0.0000, epochs_to_threshold=3.20
+  gap= 18: mean=1.0000, std=0.0000, epochs_to_threshold=3.20
+  gap= 20: mean=1.0000, std=0.0000, epochs_to_threshold=3.20
+  gap= 22: mean=1.0000, std=0.0000, epochs_to_threshold=3.20
+  gap= 26: mean=1.0000, std=0.0000, epochs_to_threshold=3.40
+  gap= 30: mean=1.0000, std=0.0000, epochs_to_threshold=3.80
+
+RNN
+  critical_gap: None
+  gap= 10: mean=1.0000, std=0.0000, epochs_to_threshold=4.80
+  gap= 18: mean=1.0000, std=0.0000, epochs_to_threshold=12.80
+  gap= 20: mean=1.0000, std=0.0000, epochs_to_threshold=19.40
+  gap= 22: mean=1.0000, std=0.0000, epochs_to_threshold=14.80
+  gap= 26: mean=1.0000, std=0.0000, epochs_to_threshold=18.80
+  gap= 30: mean=1.0000, std=0.0000, epochs_to_threshold=23.80

@@ -1,0 +1,21 @@
+Phase 2: multi-token delayed memory (k=2) — RNN vs LSTM
+
+Critical gap threshold: accuracy < 0.85
+
+RNN
+  critical_gap: 20
+  gap= 10: mean=1.0000, std=0.0000, epochs_to_threshold=7.60
+  gap= 18: mean=0.8992, std=0.2016, epochs_to_threshold=13.00
+  gap= 20: mean=0.7916, std=0.2554, epochs_to_threshold=12.33
+  gap= 22: mean=0.9000, std=0.2000, epochs_to_threshold=19.75
+  gap= 26: mean=0.8020, std=0.2425, epochs_to_threshold=23.67
+  gap= 30: mean=0.7996, std=0.2459, epochs_to_threshold=26.33
+
+LSTM
+  critical_gap: 22
+  gap= 10: mean=1.0000, std=0.0000, epochs_to_threshold=8.60
+  gap= 18: mean=0.9500, std=0.1000, epochs_to_threshold=22.50
+  gap= 20: mean=1.0000, std=0.0000, epochs_to_threshold=28.60
+  gap= 22: mean=0.6944, std=0.1959, epochs_to_threshold=23.00
+  gap= 26: mean=0.7948, std=0.1926, epochs_to_threshold=41.00
+  gap= 30: mean=0.6096, std=0.1964, epochs_to_threshold=30.00

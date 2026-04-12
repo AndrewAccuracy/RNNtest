@@ -75,6 +75,32 @@ python experiment.py --preset slides
 python experiment.py --preset quick --epochs 2
 ```
 
+### Experiment 2 Final Copy Task
+
+For the cleaner `RNN vs LSTM` comparison, use the dedicated copy-memory script. The current best showcase setup is:
+
+```bash
+python experiment_lstm_copy_task.py \
+  --gaps 15 18 \
+  --seeds 1 2 3 \
+  --memory-length 3 \
+  --train-samples 1800 \
+  --test-samples 400 \
+  --batch-size 64 \
+  --epochs 60 \
+  --embedding-dim 32 \
+  --hidden-size 128 \
+  --num-symbols 4 \
+  --token-threshold 0.75 \
+  --output-dir outputs_exp2_copy_task_final
+```
+
+This run produces a cleaner “why LSTM” story:
+
+- `RNN` stays near chance on delayed copy recall
+- `LSTM` reaches much higher token recall and sequence recall
+- the learning-curve figures make the convergence gap easier to explain in a PPT
+
 If you only use small gaps (e.g. 5 and 10), RNN and LSTM will often both reach ~100% accuracy and the Phase 2 curves overlap—this is expected, not a bug. Use longer gaps (included in `--preset slides`) to see separation.
 
 ### Export data to disk (optional)
@@ -124,3 +150,11 @@ The script writes results into `outputs/`.
 - **Phase 2 slide:** `phase2_accuracy_vs_gap_bands.png` (optionally add `phase2_seed_accuracy_scatter.png` to show stability).
 
 If you need one single overview chart with every model, use `accuracy_vs_gap_bands.png`.
+
+For the dedicated copy-memory experiment, see `outputs_exp2_copy_task_final/`:
+
+- `exp2_copy_token_accuracy.png`
+- `exp2_copy_sequence_accuracy.png`
+- `exp2_copy_token_learning_curve.png`
+- `exp2_copy_sequence_learning_curve.png`
+- `exp2_copy_summary.txt`

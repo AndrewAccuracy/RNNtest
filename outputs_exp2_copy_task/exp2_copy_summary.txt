@@ -1,0 +1,14 @@
+Experiment 2: copy-memory task
+Critical gap threshold: exact sequence accuracy < 0.80
+
+RNN
+  critical_gap: 10
+  gap= 10: seq_mean=0.0000, seq_std=0.0000, token_mean=0.1211
+  gap= 20: seq_mean=0.0000, seq_std=0.0000, token_mean=0.1056
+  gap= 30: seq_mean=0.0000, seq_std=0.0000, token_mean=0.0000
+
+LSTM
+  critical_gap: 10
+  gap= 10: seq_mean=0.0000, seq_std=0.0000, token_mean=0.1261
+  gap= 20: seq_mean=0.0000, seq_std=0.0000, token_mean=0.1197
+  gap= 30: seq_mean=0.0000, seq_std=0.0000, token_mean=0.1094

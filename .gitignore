@@ -8,6 +8,5 @@ __pycache__/
 .mypy_cache/
 .idea/
 
-# 本地汇报、临时 Office 锁文件（不进仓库）
-*.docx
+# Office 临时锁文件
 ~$*.docx

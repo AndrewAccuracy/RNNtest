@@ -12,7 +12,7 @@
   <a href="说明文档.md"><img alt="中文文档" src="https://img.shields.io/badge/docs-简体中文-ff6b35?style=flat-square" /></a>
 </p>
 
-<p align="center"><b>English</b> · <a href="说明文档.md">简体中文</a> · <a href="ppt_experiment_integration.md">PPT 整合建议</a></p>
+<p align="center"><b>English</b> · <a href="说明文档.md">简体中文</a> · <a href="循环神经网络_汇报报告.docx">汇报 Word</a></p>
 
 ---
 
@@ -76,7 +76,7 @@ We stand on a simple stack:
 | **Extra metrics** | Critical gap · time-to-loss-threshold · matched-parameter table (`--match-lstm-params`). |
 | **Slide-ready artifacts** | `phase1_*` / `phase2_*` PNGs + `metrics.json` + human-readable `summary.txt`. |
 | **Copy task (Exp 2)** | Token / sequence accuracy + learning curves under `outputs_exp2_copy_task_final/`. |
-| **PPT integration** | Slide placement and talking points → [`ppt_experiment_integration.md`](ppt_experiment_integration.md). |
+| **Report (Word)** | Full narrative → [`循环神经网络_汇报报告.docx`](循环神经网络_汇报报告.docx). |
 | **中文说明** | Full walkthrough → [`说明文档.md`](说明文档.md). |
 
 ---
@@ -296,7 +296,7 @@ Under `outputs_exp2_copy_task_final/` (after the command above):
 - **Phase 2 slide:** `phase2_accuracy_vs_gap_bands.png` (+ optional `phase2_seed_accuracy_scatter.png`).
 - **LSTM payoff slide:** `outputs_exp2_copy_task_final/exp2_copy_token_learning_curve.png`.
 
-Deck structure and speaker notes → [`ppt_experiment_integration.md`](ppt_experiment_integration.md).
+Background and narrative → [`循环神经网络_汇报报告.docx`](循环神经网络_汇报报告.docx) · Chinese docs → [`说明文档.md`](说明文档.md).
 
 ---
 

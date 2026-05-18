@@ -1,83 +1,160 @@
-# Delayed Memory Experiment For RNN PPT
+# Delayed Memory Experiments for RNN
 
-This project supports an RNN presentation in **two phases**:
+<p align="center"><sub>Reproducible PyTorch benchmarks for teaching <b>why recurrence</b> and <b>why LSTM</b> — built for slides, not papers.</sub></p>
 
-1. **Phase 1 — Why recurrence (vs older baselines)**  
-   Compare a fixed-window model and a **full-sequence flattened MLP** against an **RNN**. The fixed-window baseline often cannot see the label-relevant token; the flat MLP sees the **same tokens** as the RNN but without weight sharing over time—useful for contrasting *inductive bias* and scaling.
+> **Short dependencies beat long ones. Recurrence shares weights across time. LSTM gates what to remember.** This repo runs two controlled narratives on synthetic delayed-memory tasks: Phase 1 pits fixed-window and flat MLP baselines against an RNN; Phase 2 pits plain RNN against LSTM when the gap gets long. One command → band plots, heatmaps, JSON metrics, and copy-task learning curves you can drop straight into a deck.
 
-2. **Phase 2 — Why LSTM (vs plain RNN)**  
-   Compare **RNN** and **LSTM** when dependencies get long: plain RNNs often become unstable; LSTMs are often more stable in the same regime.
+<p align="center">
+  <a href="requirements.txt"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square" /></a>
+  <a href="requirements.txt"><img alt="PyTorch" src="https://img.shields.io/badge/pytorch-2.2%2B-ee4c2c?style=flat-square&logo=pytorch&logoColor=white" /></a>
+  <a href="#quickstart"><img alt="Quickstart" src="https://img.shields.io/badge/quickstart-one%20command-green?style=flat-square" /></a>
+  <a href="#outputs"><img alt="Figures" src="https://img.shields.io/badge/figures-PNG%20%2B%20JSON-9b59b6?style=flat-square" /></a>
+  <a href="说明文档.md"><img alt="中文文档" src="https://img.shields.io/badge/docs-简体中文-ff6b35?style=flat-square" /></a>
+</p>
+
+<p align="center"><b>English</b> · <a href="说明文档.md">简体中文</a> · <a href="ppt_experiment_integration.md">PPT 整合建议</a></p>
+
+---
+
+## Showcase
+
+The figures below ship in-repo under `outputs/` and `outputs_exp2_copy_task_final/` — regenerate anytime with the commands in [Quickstart](#quickstart).
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<a href="outputs/phase1_accuracy_vs_gap_bands.png"><img src="outputs/phase1_accuracy_vs_gap_bands.png" alt="Phase 1 — accuracy vs gap" width="100%" /></a><br/>
+<sub><b>Phase 1 · Why recurrence</b><br/>History-MLP (fixed window) · Flat-MLP (full sequence, no weight sharing) · RNN. As gap grows, the window baseline often cannot see the label-relevant token; the flat MLP sees the same symbols but without temporal structure.</sub>
+</td>
+<td width="50%" valign="top">
+<a href="outputs/phase2_accuracy_vs_gap_bands.png"><img src="outputs/phase2_accuracy_vs_gap_bands.png" alt="Phase 2 — RNN vs LSTM" width="100%" /></a><br/>
+<sub><b>Phase 2 · Why LSTM</b><br/>RNN vs LSTM on multi-token delayed memory. At long gaps, plain RNN accuracy collapses while LSTM stays stable — the slide story for gated memory.</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<a href="outputs/phase1_training_loss_gap_max.png"><img src="outputs/phase1_training_loss_gap_max.png" alt="Phase 1 training loss" width="100%" /></a><br/>
+<sub><b>Training loss (Phase 1)</b> · max gap slice — how fast each architecture fits once the dependency length is fixed.</sub>
+</td>
+<td width="50%" valign="top">
+<a href="outputs_exp2_copy_task_final/exp2_copy_token_learning_curve.png"><img src="outputs_exp2_copy_task_final/exp2_copy_token_learning_curve.png" alt="Copy task learning curve" width="100%" /></a><br/>
+<sub><b>Experiment 2 · Copy task</b> · dedicated <code>experiment_lstm_copy_task.py</code> run — token recall learning curves where RNN stays near chance and LSTM climbs.</sub>
+</td>
+</tr>
+</table>
+
+---
+
+## Why this exists
+
+Recurrent networks are easy to *describe* and hard to *show*. A single accuracy number on MNIST does not explain:
+
+| Without a controlled task | What you miss |
+|---|---|
+| “RNNs handle sequences” | *Which* part of the sequence matters, and *when* |
+| “LSTM fixes vanishing gradients” | A visible gap where plain RNN fails and LSTM does not |
+| “Just use a bigger MLP” | Same tokens, different inductive bias — weight sharing vs flattening |
+
+**This project is the controlled task.** Synthetic sequences, sweepable gap length, multiple seeds, phase-split plots — so a 15-minute talk can show *mechanism*, not folklore.
+
+We stand on a simple stack:
+
+- **PyTorch** — `nn.RNN` / `nn.LSTM` classifiers plus two non-recurrent baselines in one file ([`experiment.py`](experiment.py)).
+- **Optional JSONL export** — freeze datasets for reproducible demos (`--export-data` / `--data-dir`).
+- **Copy-memory follow-up** — a cleaner RNN vs LSTM story in [`experiment_lstm_copy_task.py`](experiment_lstm_copy_task.py).
+
+---
+
+## At a glance
+
+| | What you get |
+|---|---|
+| **Two narrative phases** | Phase 1: History-MLP · Flat-MLP · RNN. Phase 2: RNN · LSTM. |
+| **Four model families** | Fixed window · flat sequence MLP · vanilla RNN · LSTM — same vocab, same task, different structure. |
+| **Gap sweep** | Dependency length from 5 to 100 (presets: `slides`, `quick`, or custom `--gaps`). |
+| **Multi-seed stability** | Default 5 seeds; mean ± scaled std bands on every curve. |
+| **Extra metrics** | Critical gap · time-to-loss-threshold · matched-parameter table (`--match-lstm-params`). |
+| **Slide-ready artifacts** | `phase1_*` / `phase2_*` PNGs + `metrics.json` + human-readable `summary.txt`. |
+| **Copy task (Exp 2)** | Token / sequence accuracy + learning curves under `outputs_exp2_copy_task_final/`. |
+| **PPT integration** | Slide placement and talking points → [`ppt_experiment_integration.md`](ppt_experiment_integration.md). |
+| **中文说明** | Full walkthrough → [`说明文档.md`](说明文档.md). |
+
+---
 
 ## Task
 
-Each sequence looks like this:
+Each sequence looks like this (Phase 2 uses a `k`-token prefix; default `k=2` → 4 pattern classes):
 
 ```text
 A B c d e f g ... ?
 A A c d e f g ... ?
 B A c d e f g ... ?
-...
 ```
 
-Meaning:
+- The **first `k` tokens** encode the class (pattern).
+- The **middle** is random distractors from `{c,d,e,f,g}`.
+- The final **`?`** asks the model to predict the pattern class.
 
-- in Phase 2, the first `k` tokens form a pattern
-- the middle tokens are random distractors
-- the last token (`?`) asks the model to predict the pattern class
+Larger **gap** → longer distractor run → harder long-range credit assignment. That is the knob your slides turn.
 
-With `k=2`, there are 4 pattern classes. This is more informative than a single-token memory task and better exposes the transition from short dependency to long dependency.
+---
 
-## Compared Models
+## Compared models
 
-- `History-MLP`: only sees the last few tokens (fixed window), representing a fixed-window historical model
-- `Flat-MLP`: full sequence, one-hot flattened then MLP (no recurrence; input size grows with sequence length)
-- `RNN`: reads the whole sequence and propagates hidden states
-- `LSTM`: reads the whole sequence with gated memory
+| Model | Role in the story |
+|---|---|
+| **History-MLP** (`FixedWindowMLP`) | Only the last `history_window` tokens (default 5) — fixed-window “old baseline”. |
+| **Flat-MLP** (`FlatSequenceMLP`) | Full sequence one-hot flattened → MLP. Same symbols as RNN, **no** weight sharing; input dim grows with length. |
+| **RNN** (`RNNClassifier`) | Reads the whole sequence; hidden state propagates forward. |
+| **LSTM** (`LSTMClassifier`) | Gated memory — Phase 2 hero when gaps are long. |
 
-## Additional Metrics
+---
 
-Besides `accuracy vs gap`, the project now also computes:
-
-- `critical gap`: the first dependency length where mean accuracy drops below a chosen threshold
-- `seed stability`: variability across multiple random seeds
-- `training time to threshold`: how many epochs are needed before training loss drops below a chosen threshold
-- `matched-parameter comparison`: an approximate parameter-matched RNN/LSTM comparison table
-
-## Run
-
-Activate the local project environment:
+## Quickstart
 
 ```bash
-source .venv/bin/activate
+git clone git@github.com:AndrewAccuracy/RNNtest.git
+cd RNNtest
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-Run the default experiment:
+**Default two-phase run** (writes `outputs/`):
 
 ```bash
 python experiment.py
 ```
 
-Optional custom run:
-
-```bash
-python experiment.py --epochs 20 --hidden-size 16 --gaps 5 10 18 20 22 26 30 50 100 --seeds 1 2 3 4 5 --phase2-prefix-len 2 --match-lstm-params
-```
-
-**Recommended for slides (full gap sweep + 5 seeds):**
+**Recommended for slides** (full gap sweep + 5 seeds):
 
 ```bash
 python experiment.py --preset slides
 ```
 
-**Quick smoke test (short gaps, one seed):**
+**Quick smoke test**:
 
 ```bash
 python experiment.py --preset quick --epochs 2
 ```
 
-### Experiment 2 Final Copy Task
+**Custom sweep**:
 
-For the cleaner `RNN vs LSTM` comparison, use the dedicated copy-memory script. The current best showcase setup is:
+```bash
+python experiment.py \
+  --epochs 20 \
+  --hidden-size 16 \
+  --gaps 5 10 18 20 22 26 30 50 100 \
+  --seeds 1 2 3 4 5 \
+  --phase2-prefix-len 2 \
+  --match-lstm-params
+```
+
+> If you only use small gaps (e.g. 5 and 10), RNN and LSTM often both hit ~100% — expected overlap, not a bug. Use `--preset slides` or gaps ≥ 18 to separate Phase 2.
+
+### Experiment 2 — copy task (RNN vs LSTM)
+
+Cleaner “why LSTM” demo with token-level metrics:
 
 ```bash
 python experiment_lstm_copy_task.py \
@@ -95,66 +172,169 @@ python experiment_lstm_copy_task.py \
   --output-dir outputs_exp2_copy_task_final
 ```
 
-This run produces a cleaner “why LSTM” story:
+### Optional: export / load fixed data
 
-- `RNN` stays near chance on delayed copy recall
-- `LSTM` reaches much higher token recall and sequence recall
-- the learning-curve figures make the convergence gap easier to explain in a PPT
-
-If you only use small gaps (e.g. 5 and 10), RNN and LSTM will often both reach ~100% accuracy and the Phase 2 curves overlap—this is expected, not a bug. Use longer gaps (included in `--preset slides`) to see separation.
-
-### Export data to disk (optional)
-
-Write JSONL train/test splits under `data/delayed_memory/gap_XXX/` using the same RNG as in-code generation (train: `first_seed + 100`, test: `first_seed + 200`):
+Export JSONL splits (same RNG rules as in-code generation):
 
 ```bash
 python experiment.py --export-data
 ```
 
-Custom root:
-
-```bash
-python experiment.py --export-data --data-export-root data/delayed_memory
-```
-
-### Train from exported JSONL (optional)
-
-When set, every seed uses the **same** fixed train/test files; variance across seeds reflects initialization and batch order, not resampled data:
+Train from disk (all seeds share the same files — variance is init/order, not resampling):
 
 ```bash
 python experiment.py --data-dir data/delayed_memory
 ```
 
+---
+
+## Six load-bearing ideas
+
+### 1 · Two phases, one repo.
+
+Phase 1 answers “why not just an MLP?” Phase 2 answers “why not just an RNN?” Split figures (`phase1_*`, `phase2_*`) map 1:1 to slide sections.
+
+### 2 · Gap is the independent variable.
+
+Everything else can stay fixed while **gap length** moves on the x-axis. That is how you *show* long-term dependency without hand-waving.
+
+### 3 · Seeds are first-class.
+
+Default five seeds → mean curves + variability bands. One lucky run is not a result.
+
+### 4 · Baselines are fair but different.
+
+Flat-MLP sees the same token set as RNN; History-MLP does not. The comparison teaches **inductive bias**, not cheating.
+
+### 5 · Metrics beyond accuracy.
+
+`critical gap`, training time to loss threshold, and optional matched-parameter tables support Q&A after the talk.
+
+### 6 · Artifacts are the product.
+
+The goal is not SOTA — it is **PNG + JSON + summary.txt** you can paste into Keynote/PowerPoint without a second plotting pass.
+
+---
+
+## Architecture
+
+```
+┌──────────────────── experiment.py ────────────────────┐
+│  For each gap × seed:                                  │
+│    generate (memory or --data-dir JSONL)               │
+│    train History-MLP · Flat-MLP · RNN · LSTM           │
+│    log accuracy · loss · timing metrics                │
+└────────────────────────┬──────────────────────────────┘
+                         ▼
+              aggregate multi-seed stats
+                         │
+         ┌───────────────┴───────────────┐
+         ▼                               ▼
+   phase1 figures                  phase2 figures
+   (3 models)                      (RNN vs LSTM)
+         │                               │
+         └───────────────┬───────────────┘
+                         ▼
+                  outputs/*.png
+                  outputs/*.json
+                  outputs/*_summary.txt
+
+┌──────── experiment_lstm_copy_task.py ───────────────┐
+│  Delayed copy · token + sequence accuracy              │
+│  → outputs_exp2_copy_task_final/                       │
+└────────────────────────────────────────────────────────┘
+```
+
+| Layer | Stack |
+|---|---|
+| Runtime | Python 3.10+ · PyTorch 2.2+ |
+| Plotting | matplotlib (Agg backend) |
+| Data | In-memory RNG · optional JSONL under `data/delayed_memory/` |
+| Entrypoints | [`experiment.py`](experiment.py) · [`experiment_lstm_copy_task.py`](experiment_lstm_copy_task.py) |
+
+---
+
 ## Outputs
 
-The script writes results into `outputs/`.
+All paths relative to repo root.
 
-**Phase-focused figures (recommended for slides):**
+### Phase-focused (recommended for slides)
 
-- `phase1_accuracy_vs_gap_bands.png`, `phase1_accuracy_heatmap.png`, `phase1_seed_accuracy_scatter.png`, `phase1_training_loss_gap_max.png`
-- `phase2_accuracy_vs_gap_bands.png`, `phase2_accuracy_heatmap.png`, `phase2_seed_accuracy_scatter.png`, `phase2_training_loss_gap_max.png`, `phase2_time_to_threshold.png`
+| File | Use on slide |
+|---|---|
+| `outputs/phase1_accuracy_vs_gap_bands.png` | Phase 1 headline chart |
+| `outputs/phase1_accuracy_heatmap.png` | Optional detail grid |
+| `outputs/phase1_training_loss_gap_max.png` | Optimization speed story |
+| `outputs/phase2_accuracy_vs_gap_bands.png` | Phase 2 headline chart |
+| `outputs/phase2_seed_accuracy_scatter.png` | Seed stability |
+| `outputs/phase2_training_loss_gap_max.png` | RNN vs LSTM loss |
+| `outputs/phase2_time_to_threshold.png` | Epochs-to-threshold |
 
-**All four models together:**
+### Metrics & text
 
-- `accuracy_vs_gap_bands.png`, `accuracy_heatmap.png`, `seed_accuracy_scatter.png`, `training_loss_gap_max.png`
+- `outputs/phase1_metrics.json`, `outputs/phase2_metrics.json`, `outputs/metrics.json`, `outputs/metrics_combined.json`
+- `outputs/phase1_summary.txt`, `outputs/phase2_summary.txt`, `outputs/summary.txt`
+- `outputs/matched_parameter_table.md` (with `--match-lstm-params`)
 
-**Metrics:**
+### Experiment 2 copy task
 
-- `phase1_metrics.json`, `phase2_metrics.json`, `metrics.json` (all models), `metrics_combined.json` (nested `phase1` / `phase2` / `all_models`)
-- `phase1_summary.txt`, `phase2_summary.txt`, `summary.txt`
-- `matched_parameter_table.md`
+Under `outputs_exp2_copy_task_final/` (after the command above):
 
-## Suggested PPT Usage
+- `exp2_copy_token_accuracy.png` · `exp2_copy_sequence_accuracy.png`
+- `exp2_copy_token_learning_curve.png` · `exp2_copy_sequence_learning_curve.png`
+- `exp2_copy_summary.txt` · `exp2_copy_metrics.json`
 
-- **Phase 1 slide:** `phase1_accuracy_vs_gap_bands.png` (optionally add `phase1_accuracy_heatmap.png`).
-- **Phase 2 slide:** `phase2_accuracy_vs_gap_bands.png` (optionally add `phase2_seed_accuracy_scatter.png` to show stability).
+### All models on one chart
 
-If you need one single overview chart with every model, use `accuracy_vs_gap_bands.png`.
+- `outputs/accuracy_vs_gap_bands.png` · `outputs/accuracy_heatmap.png` · `outputs/seed_accuracy_scatter.png`
 
-For the dedicated copy-memory experiment, see `outputs_exp2_copy_task_final/`:
+---
 
-- `exp2_copy_token_accuracy.png`
-- `exp2_copy_sequence_accuracy.png`
-- `exp2_copy_token_learning_curve.png`
-- `exp2_copy_sequence_learning_curve.png`
-- `exp2_copy_summary.txt`
+## Suggested PPT usage
+
+- **Phase 1 slide:** `phase1_accuracy_vs_gap_bands.png` (+ optional `phase1_accuracy_heatmap.png`).
+- **Phase 2 slide:** `phase2_accuracy_vs_gap_bands.png` (+ optional `phase2_seed_accuracy_scatter.png`).
+- **LSTM payoff slide:** `outputs_exp2_copy_task_final/exp2_copy_token_learning_curve.png`.
+
+Deck structure and speaker notes → [`ppt_experiment_integration.md`](ppt_experiment_integration.md).
+
+---
+
+## Status
+
+| Surface | State |
+|---|---|
+| Phase 1 sweep (History-MLP · Flat-MLP · RNN) | ✅ stable |
+| Phase 2 sweep (RNN · LSTM) | ✅ stable |
+| Presets `slides` / `quick` | ✅ stable |
+| JSONL export / `--data-dir` | ✅ stable |
+| Copy-task experiment (`experiment_lstm_copy_task.py`) | ✅ stable |
+| Matched-parameter table | ✅ optional flag |
+| Automated CI / pytest | ⏳ not in scope (synthetic smoke via `--preset quick`) |
+
+---
+
+## Contributing
+
+Issues and PRs welcome — especially:
+
+- Clearer default hyperparameters for new gap ranges
+- Additional baselines (GRU, Transformer encoder) with the same plotting hooks
+- English/中文 doc parity
+
+For Chinese-only detail, edit [`说明文档.md`](说明文档.md) alongside this file.
+
+---
+
+## References
+
+| Idea | Where it shows up here |
+|---|---|
+| Delayed memory / gap sweep | Core task in [`experiment.py`](experiment.py) |
+| Fixed-window vs full-history | `FixedWindowMLP` vs `FlatSequenceMLP` |
+| Vanishing signal in vanilla RNN | Phase 2 + copy task |
+| Gated memory | `LSTMClassifier` · [`experiment_lstm_copy_task.py`](experiment_lstm_copy_task.py) |
+
+---
+
+<p align="center">If these curves help your class or talk, ★ the repo — it helps others find a teaching benchmark that actually separates the models.</p>

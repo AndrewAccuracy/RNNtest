@@ -290,12 +290,6 @@ Under `outputs_exp2_copy_task_final/` (after the command above):
 
 ---
 
-## Suggested PPT usage
-
-- **Phase 1 slide:** `phase1_accuracy_vs_gap_bands.png` (+ optional `phase1_accuracy_heatmap.png`).
-- **Phase 2 slide:** `phase2_accuracy_vs_gap_bands.png` (+ optional `phase2_seed_accuracy_scatter.png`).
-- **LSTM payoff slide:** `outputs_exp2_copy_task_final/exp2_copy_token_learning_curve.png`.
-
 Background and narrative → [`循环神经网络_汇报报告.docx`](循环神经网络_汇报报告.docx) · Chinese docs → [`说明文档.md`](说明文档.md).
 
 ---

@@ -25,6 +25,7 @@ except ModuleNotFoundError as exc:
 
 
 DEFAULT_OUTPUT_DIR = Path("outputs_exp2_copy_task")
+BAND_STD_SCALE = 0.6
 
 
 def reseed(seed: int) -> None:
@@ -335,14 +336,33 @@ def compute_critical_gap(results: dict[int, dict[str, float | list[float] | None
     return None
 
 
+def scaled_band_bounds(
+    means: np.ndarray,
+    stds: np.ndarray,
+    *,
+    scale: float = BAND_STD_SCALE,
+    lower_clip: float | None = None,
+    upper_clip: float | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    scaled_stds = stds * scale
+    lower = means - scaled_stds
+    upper = means + scaled_stds
+    if lower_clip is not None:
+        lower = np.maximum(lower, lower_clip)
+    if upper_clip is not None:
+        upper = np.minimum(upper, upper_clip)
+    return lower, upper
+
+
 def plot_sequence_accuracy(results: dict[str, dict[int, dict[str, float | list[float] | None]]], output_path: Path) -> None:
     plt.figure(figsize=(10, 6))
     for model_name, model_results in results.items():
         gaps = sorted(model_results.keys())
         means = np.array([model_results[g]["mean_sequence_accuracy"] for g in gaps], dtype=float)
         stds = np.array([model_results[g]["std_sequence_accuracy"] for g in gaps], dtype=float)
+        lower, upper = scaled_band_bounds(means, stds, lower_clip=0.0, upper_clip=1.0)
         plt.plot(gaps, means, marker="o", linewidth=2.5, label=model_name)
-        plt.fill_between(gaps, means - stds, means + stds, alpha=0.18)
+        plt.fill_between(gaps, lower, upper, alpha=0.12)
 
     plt.xlabel("Gap Length")
     plt.ylabel("Exact Sequence Accuracy")
@@ -361,8 +381,9 @@ def plot_token_accuracy(results: dict[str, dict[int, dict[str, float | list[floa
         gaps = sorted(model_results.keys())
         means = np.array([model_results[g]["mean_token_accuracy"] for g in gaps], dtype=float)
         stds = np.array([model_results[g]["std_token_accuracy"] for g in gaps], dtype=float)
+        lower, upper = scaled_band_bounds(means, stds, lower_clip=0.0, upper_clip=1.0)
         plt.plot(gaps, means, marker="o", linewidth=2.5, label=model_name)
-        plt.fill_between(gaps, means - stds, means + stds, alpha=0.18)
+        plt.fill_between(gaps, lower, upper, alpha=0.12)
 
     plt.xlabel("Gap Length")
     plt.ylabel("Token Accuracy")
@@ -391,8 +412,9 @@ def plot_learning_curve_for_gap(
         means = np.array(model_results[gap][metric_key], dtype=float)
         stds = np.array(model_results[gap][std_key], dtype=float)
         epochs = np.arange(1, len(means) + 1)
+        lower, upper = scaled_band_bounds(means, stds, lower_clip=0.0, upper_clip=1.0)
         plt.plot(epochs, means, linewidth=2.5, label=model_name)
-        plt.fill_between(epochs, means - stds, means + stds, alpha=0.18)
+        plt.fill_between(epochs, lower, upper, alpha=0.12)
 
     plt.xlabel("Epoch")
     plt.ylabel(ylabel)

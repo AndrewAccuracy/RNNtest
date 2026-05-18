@@ -35,6 +35,7 @@ PRESET_QUICK_SEEDS = (1,)
 
 # 热力图纵轴顺序（上→下）；Flat-MLP 固定在最底行，便于和递归模型对比
 HEATMAP_ROW_ORDER = ("History-MLP", "RNN", "LSTM", "Flat-MLP")
+BAND_STD_SCALE = 0.6
 
 VOCAB = ["A", "B", "c", "d", "e", "f", "g", "?"]
 TOKEN_TO_ID = {token: idx for idx, token in enumerate(VOCAB)}
@@ -629,6 +630,24 @@ def summarize_critical_gaps(
     }
 
 
+def scaled_band_bounds(
+    means: np.ndarray,
+    stds: np.ndarray,
+    *,
+    scale: float = BAND_STD_SCALE,
+    lower_clip: float | None = None,
+    upper_clip: float | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    scaled_stds = stds * scale
+    lower = means - scaled_stds
+    upper = means + scaled_stds
+    if lower_clip is not None:
+        lower = np.maximum(lower, lower_clip)
+    if upper_clip is not None:
+        upper = np.minimum(upper, upper_clip)
+    return lower, upper
+
+
 def plot_accuracy_bands(
     results: dict[str, dict[int, dict[str, float | list[float]]]],
     output_path: Path,
@@ -640,9 +659,10 @@ def plot_accuracy_bands(
         gap_lengths = sorted(model_results.keys())
         means = np.array([model_results[gap]["mean_test_accuracy"] for gap in gap_lengths], dtype=float)
         stds = np.array([model_results[gap]["std_test_accuracy"] for gap in gap_lengths], dtype=float)
+        lower, upper = scaled_band_bounds(means, stds, lower_clip=0.0, upper_clip=1.0)
 
         plt.plot(gap_lengths, means, marker="o", linewidth=2.5, label=model_name)
-        plt.fill_between(gap_lengths, means - stds, means + stds, alpha=0.18)
+        plt.fill_between(gap_lengths, lower, upper, alpha=0.12)
 
     plt.xlabel("Dependency Gap Length")
     plt.ylabel("Test Accuracy")
@@ -759,9 +779,10 @@ def plot_training_snapshot(
             stds = stds[i0:]
         epochs = np.arange(epoch_start, epoch_start + len(means))
         epoch_end = epoch_start + len(means) - 1
+        lower, upper = scaled_band_bounds(means, stds, lower_clip=0.0)
 
         plt.plot(epochs, means, linewidth=2.3, label=model_name)
-        plt.fill_between(epochs, means - stds, means + stds, alpha=0.18)
+        plt.fill_between(epochs, lower, upper, alpha=0.12)
 
     if plot_title is None:
         if epoch_end is not None:

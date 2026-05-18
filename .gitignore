@@ -7,3 +7,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .idea/
+
+# 本地汇报、临时 Office 锁文件（不进仓库）
+*.docx
+~$*.docx
